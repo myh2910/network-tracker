@@ -1,4 +1,4 @@
-# Network Tracker
+# ![Icon](assets/icon_32.png) Network Tracker
 
 A Chrome extension to get all network requests in a website. Look how it works in the current GitHub repo page:
 

@@ -22,16 +22,16 @@
 	"action": {
 		"default_popup": "popup.html",
 		"default_icon": {
-			"16": "assets/network_16.png",
-			"32": "assets/network_32.png",
-			"64": "assets/network_64.png",
-			"128": "assets/network_128.png"
+			"16": "assets/icon_16.png",
+			"32": "assets/icon_32.png",
+			"64": "assets/icon_64.png",
+			"128": "assets/icon_128.png"
 		}
 	},
 	"icons": {
-		"16": "assets/network_16.png",
-		"32": "assets/network_32.png",
-		"64": "assets/network_64.png",
-		"128": "assets/network_128.png"
+		"16": "assets/icon_16.png",
+		"32": "assets/icon_32.png",
+		"64": "assets/icon_64.png",
+		"128": "assets/icon_128.png"
 	}
 }
