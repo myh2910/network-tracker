@@ -3,7 +3,7 @@
 	"author": "Yohan Min",
 	"name": "Network Tracker",
 	"description": "Get all network requests in a website",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"background": {
 		"service_worker": "js/background.js"
 	},

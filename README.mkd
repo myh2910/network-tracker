@@ -1,10 +1,13 @@
 # Network Tracker
 
-A Chrome extension to get all network requests in a website.
+A Chrome extension to get all network requests in a website. Look how it works in the current GitHub repo page:
+
+![Screenshot](assets/screenshot.png)
 
 ## Sources
 
 - <https://www.flaticon.com/free-icon/network_2561991>
+- <https://developer.chrome.com/docs/extensions/mv3/getstarted/>
 - <https://stackoverflow.com/questions/20019958>
 - <https://stackoverflow.com/questions/16096482>
 - <https://stackoverflow.com/questions/66618136>

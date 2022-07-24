@@ -18,18 +18,13 @@ window.addEventListener('DOMContentLoaded', () => {
 					statusCode.classList.add('box', 'status');
 					statusCode.textContent = requests[i].statusCode;
 
-					const codeColors = [
+					const statusColors = [
 						'blue', 'green', 'orange', 'red', 'red'
 					];
+					const idx = Math.floor(requests[i].statusCode / 100) - 1;
+					statusCode.style.background = statusColors[idx];
 
-					for (let j = 0; j < codeColors.length; j++) {
-						if (requests[i].statusCode / 100 < j + 2) {
-							statusCode.style.background = codeColors[j];
-							break;
-						}
-					}
-
-					if (requests[i].statusLine !== "") {
+					if (requests[i].statusLine !== '') {
 						let statusLine = document.createElement('span');
 						statusLine.className = 'tooltip';
 						statusLine.textContent = requests[i].statusLine;
