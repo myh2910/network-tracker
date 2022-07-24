@@ -1,0 +1,10 @@
+# Network Tracker
+
+A Chrome extension to get all network requests in a website.
+
+## Sources
+
+- <https://www.flaticon.com/free-icon/network_2561991>
+- <https://stackoverflow.com/questions/20019958>
+- <https://stackoverflow.com/questions/16096482>
+- <https://stackoverflow.com/questions/66618136>
