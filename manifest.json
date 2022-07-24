@@ -1,0 +1,37 @@
+{
+	"manifest_version": 3,
+	"author": "Yohan Min",
+	"name": "Network Tracker",
+	"description": "Get all network requests in a website",
+	"version": "0.0.1",
+	"background": {
+		"service_worker": "js/background.js"
+	},
+	"content_scripts": [{
+		"matches": ["<all_urls>"],
+		"run_at": "document_start",
+		"js": ["js/content.js"]
+	}],
+	"permissions": [
+		"webRequest",
+		"webNavigation",
+		"tabs",
+		"activeTab"
+  ],
+	"host_permissions": ["<all_urls>"],
+	"action": {
+		"default_popup": "popup.html",
+		"default_icon": {
+			"16": "assets/network_16.png",
+			"32": "assets/network_32.png",
+			"64": "assets/network_64.png",
+			"128": "assets/network_128.png"
+		}
+	},
+	"icons": {
+		"16": "assets/network_16.png",
+		"32": "assets/network_32.png",
+		"64": "assets/network_64.png",
+		"128": "assets/network_128.png"
+	}
+}

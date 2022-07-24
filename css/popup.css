@@ -1,0 +1,98 @@
+body {
+	font-family: "Consolas";
+	font-size: 13px;
+}
+
+h1 {
+	margin: 0 4px;
+	font-size: 20px;
+}
+
+h2 {
+	margin: 0 4px;
+	font-size: 14px;
+}
+
+li {
+	margin-bottom: 6px;
+}
+
+.container > * {
+	margin: 2px 0;
+}
+
+.box {
+	border-radius: 3px;
+	padding: 0 3px;
+	font-size: 11px;
+}
+
+.status {
+	position: relative;
+	float: left;
+	background-color: #101010;
+	color: #fff;
+}
+
+.tooltip {
+	visibility: hidden;
+	width: 80px;
+	position: absolute;
+	bottom: 120%;
+	left: 50%;
+	margin-left: -40px;
+	background-color: gray;
+	text-align: center;
+	padding: 1px;
+	border-radius: 3px;
+}
+
+.tooltip::after {
+	content: " ";
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	margin-left: -3px;
+	border-width: 3px;
+	border-style: solid;
+	border-color: gray transparent transparent transparent;
+}
+
+.type {
+	float: left;
+	font-size: 12px;
+	word-spacing: -1px;
+}
+
+.type:before {
+	content: "";
+	display: inline-block;
+}
+
+.button {
+	float: right;
+	background-color: gray;
+	color: #fff;
+	text-decoration: none;
+	user-select: none;
+}
+
+.button:hover {
+	background-color: #101010;
+}
+
+.button:active {
+	background-color: #505050;
+}
+
+.url {
+	width: 600px;
+	white-space: nowrap;
+	overflow-x: auto;
+	border: 1px solid rgba(0, 0, 0, 0.15);
+	border-radius: 2px;
+	margin: 4px 0;
+	padding: 0 2px;
+	background-color: ghostwhite;
+	font-family: inherit;
+}
