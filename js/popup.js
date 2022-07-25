@@ -1,7 +1,8 @@
 window.addEventListener('DOMContentLoaded', () => {
-  chrome.tabs.query(
-		{active: true, currentWindow: true},
-		tabs => {
+	chrome.tabs.query({
+			active: true,
+			currentWindow: true
+		}, tabs => {
 			chrome.tabs.sendMessage(tabs[0].id, {
 				from: 'popup',
 				subject: 'DOMInfo'
@@ -9,38 +10,35 @@ window.addEventListener('DOMContentLoaded', () => {
 				const manifest = chrome.runtime.getManifest();
 				document.body.querySelector('h2').textContent = `v${manifest.version} by ${manifest.author}`;
 
-				if (!requests) {
-					return;
-				}
+				if (!requests) { return; }
+
+				document.body.querySelector('ol').style.display = 'block';
+
+				const statusColor = ['blue', 'green', 'orange', 'red', 'red'];
+				const maxUrlLength = 297;
 
 				for (let i = 0; i < requests.length; i++) {
 					let statusCode = document.createElement('span');
-					statusCode.classList.add('box', 'status');
+					statusCode.classList.add('box', 'request-status');
 					statusCode.textContent = requests[i].statusCode;
+					statusCode.style.background = statusColor[Math.floor(requests[i].statusCode / 100) - 1];
 
-					const statusColors = [
-						'blue', 'green', 'orange', 'red', 'red'
-					];
-					const idx = Math.floor(requests[i].statusCode / 100) - 1;
-					statusCode.style.background = statusColors[idx];
+					let statusWrapper = document.createElement('div');
+					statusWrapper.className = 'wrapper';
+					statusWrapper.style.float = 'left';
+					statusWrapper.appendChild(statusCode);
 
 					if (requests[i].statusLine !== '') {
 						let statusLine = document.createElement('span');
 						statusLine.className = 'tooltip';
 						statusLine.textContent = requests[i].statusLine;
-	
-						statusCode.appendChild(statusLine);
-						statusCode.onmouseover = () => {
-							statusLine.style.visibility = 'visible';
-						};
-						statusCode.onmouseleave = () => {
-							statusLine.style.visibility = 'hidden';
-						};
+
+						statusWrapper.appendChild(statusLine);
 					}
 
-					let type = document.createElement('span');
-					type.className = 'type';
-					type.textContent = ` ${requests[i].mimeType || requests[i].type}`;
+					let requestType = document.createElement('span');
+					requestType.className = 'request-type';
+					requestType.textContent = ` ${requests[i].mimeType || requests[i].type}`;
 
 					let copyButton = document.createElement('a');
 					copyButton.classList.add('box', 'button');
@@ -63,21 +61,46 @@ window.addEventListener('DOMContentLoaded', () => {
 
 					let container = document.createElement('div');
 					container.className = 'container';
-					container.appendChild(statusCode);
-					container.appendChild(type);
+					container.appendChild(statusWrapper);
+					container.appendChild(requestType);
 					container.appendChild(goButton);
 					container.appendChild(copyButton);
 
-					let url = document.createElement('div');
-					url.className = 'url';
-					url.textContent = requests[i].url;
+					let tabUrl = document.createElement('span');
+					tabUrl.className = 'tooltip';
+					tabUrl.textContent = (requests[i].tabUrl.length > maxUrlLength)
+						? `${requests[i].tabUrl.substring(0, maxUrlLength - 1)}\u2026`
+						: requests[i].tabUrl;
+					tabUrl.style.wordBreak = 'break-all';
 
-					let elem = document.createElement('li');
-					elem.appendChild(container);
-					elem.appendChild(url);
+					let requestUrl = document.createElement('span');
+					requestUrl.className = 'request-url';
+					requestUrl.textContent = requests[i].url;
 
-					document.body.querySelector('ol').appendChild(elem);
+					let urlWrapper = document.createElement('div');
+					urlWrapper.className = 'wrapper';
+					urlWrapper.appendChild(requestUrl);
+					urlWrapper.appendChild(tabUrl);
+
+					let requestData = document.createElement('li');
+					requestData.appendChild(container);
+					requestData.appendChild(urlWrapper);
+
+					document.body.querySelector('ol').appendChild(requestData);
 				}
+
+				document.body.querySelectorAll('.tooltip').forEach(item => {
+					item.previousElementSibling.onmouseenter = () => {
+						item.style.bottom = 'calc(100% + 3px)';
+						item.style.visibility = 'visible';
+						item.style.opacity = '1';
+					};
+					item.previousElementSibling.onmouseleave = () => {
+						item.style.bottom = '100%';
+						item.style.visibility = 'hidden';
+						item.style.opacity = '0';
+					};
+				});
 			});
 		}
 	);

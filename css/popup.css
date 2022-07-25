@@ -13,38 +13,39 @@ h2 {
 	font-size: 14px;
 }
 
+ol {
+	display: none;
+}
+
 li {
-	margin-bottom: 6px;
+	margin-bottom: 8px;
 }
 
 .container > * {
 	margin: 2px 0;
 }
 
-.box {
-	border-radius: 3px;
-	padding: 0 3px;
-	font-size: 11px;
-}
-
-.status {
+.wrapper {
 	position: relative;
-	float: left;
-	background-color: #101010;
-	color: #fff;
+	justify-content: center;
+	display: inline-flex;
 }
 
 .tooltip {
 	position: absolute;
-	bottom: 120%;
-	left: 50%;
+	bottom: 100%;
 	visibility: hidden;
-	margin-left: -40px;
+	opacity: 0;
+	transition: 0.175s;
 	border-radius: 3px;
-	width: 80px;
-	padding: 1px;
-	background-color: gray;
+	min-width: 75px;
+	max-width: 600px;
+	padding: 1px 3px;
+	background-color: #555;
+	pointer-events: none;
+	font-size: 11px;
 	text-align: center;
+	color: #fff;
 }
 
 .tooltip:after {
@@ -55,18 +56,13 @@ li {
 	margin-left: -3px;
 	border-width: 3px;
 	border-style: solid;
-	border-color: gray transparent transparent;
+	border-color: #555 transparent transparent;
 }
 
-.type {
-	float: left;
-	font-size: 12px;
-	word-spacing: -1px;
-}
-
-.type:before {
-	content: "";
-	display: inline-block;
+.box {
+	border-radius: 3px;
+	padding: 0 3px;
+	font-size: 11px;
 }
 
 .button {
@@ -82,17 +78,33 @@ li {
 }
 
 .button:active {
-	background-color: #505050;
+	background-color: #555;
 }
 
-.url {
+.request-status {
+	position: relative;
+	color: #fff;
+}
+
+.request-type {
+	float: left;
+	font-size: 12px;
+	word-spacing: -1px;
+}
+
+.request-type:before {
+	content: "";
+	display: inline-block;
+}
+
+.request-url {
+	display: inline-block;
 	overflow-x: auto;
-	margin: 4px 0;
+	margin-bottom: -4px;
 	border: 1px solid rgba(0, 0, 0, 0.15);
 	border-radius: 2px;
 	width: 600px;
 	padding: 0 2px;
 	background-color: ghostwhite;
-	font-family: inherit;
 	white-space: nowrap;
 }
