@@ -12,33 +12,34 @@ window.addEventListener('DOMContentLoaded', () => {
 
 				if (!requests) { return; }
 
-				document.body.querySelector('ol').style.display = 'block';
-
-				const statusColor = ['blue', 'green', 'orange', 'red', 'red'];
-				const maxUrlLength = 297;
+				const table = document.createElement('table');
+				document.body.appendChild(table);
 
 				for (let i = 0; i < requests.length; i++) {
-					let statusCode = document.createElement('span');
+					let statusCode = document.createElement('div');
 					statusCode.classList.add('box', 'request-status');
 					statusCode.textContent = requests[i].statusCode;
-					statusCode.style.background = statusColor[Math.floor(requests[i].statusCode / 100) - 1];
+					statusCode.style.background = [
+						'blue', 'green', 'orange', 'red', 'red'
+					][Math.floor(requests[i].statusCode / 100) - 1];
 
 					let statusWrapper = document.createElement('div');
-					statusWrapper.className = 'wrapper';
+					statusWrapper.className = 'tooltip-wrap';
 					statusWrapper.style.float = 'left';
 					statusWrapper.appendChild(statusCode);
 
 					if (requests[i].statusLine !== '') {
-						let statusLine = document.createElement('span');
-						statusLine.className = 'tooltip';
+						let statusLine = document.createElement('div');
+						statusLine.classList.add('box', 'tooltip');
 						statusLine.textContent = requests[i].statusLine;
+						statusLine.style.minWidth = '12ch';
 
 						statusWrapper.appendChild(statusLine);
 					}
 
-					let requestType = document.createElement('span');
-					requestType.className = 'request-type';
-					requestType.textContent = ` ${requests[i].mimeType || requests[i].type}`;
+					let requestType = document.createElement('div');
+					requestType.classList.add('box', 'request-type');
+					requestType.textContent = requests[i].mimeType || requests[i].type;
 
 					let copyButton = document.createElement('a');
 					copyButton.classList.add('box', 'button');
@@ -52,41 +53,51 @@ window.addEventListener('DOMContentLoaded', () => {
 					let goButton = document.createElement('a');
 					goButton.classList.add('box', 'button');
 					goButton.textContent = 'GO';
-					goButton.style.marginLeft = '3px';
 					goButton.href = '#';
 					goButton.onclick = () => {
 						chrome.tabs.create({url: requests[i].url});
 						return false;
 					};
 
-					let container = document.createElement('div');
-					container.className = 'container';
-					container.appendChild(statusWrapper);
-					container.appendChild(requestType);
-					container.appendChild(goButton);
-					container.appendChild(copyButton);
+					let cell1 = document.createElement('td');
 
-					let tabUrl = document.createElement('span');
-					tabUrl.className = 'tooltip';
-					tabUrl.textContent = (requests[i].tabUrl.length > maxUrlLength)
-						? `${requests[i].tabUrl.substring(0, maxUrlLength - 1)}\u2026`
-						: requests[i].tabUrl;
-					tabUrl.style.wordBreak = 'break-all';
+					let cell2 = document.createElement('td');
+					cell2.appendChild(statusWrapper);
+					cell2.appendChild(requestType);
+					cell2.appendChild(goButton);
+					cell2.appendChild(copyButton);
 
-					let requestUrl = document.createElement('span');
+					let cell3 = document.createElement('td');
+					cell3.className = 'request-idx';
+					cell3.textContent = `[${i + 1}]:`;
+
+					let fitContent = document.createElement('span');
+					fitContent.className = 'fit-content';
+					fitContent.textContent = requests[i].tabUrl;
+
+					let tabUrl = document.createElement('div');
+					tabUrl.classList.add('box', 'tooltip');
+					tabUrl.appendChild(fitContent);
+
+					let requestUrl = document.createElement('div');
 					requestUrl.className = 'request-url';
 					requestUrl.textContent = requests[i].url;
 
-					let urlWrapper = document.createElement('div');
-					urlWrapper.className = 'wrapper';
-					urlWrapper.appendChild(requestUrl);
-					urlWrapper.appendChild(tabUrl);
+					let cell4 = document.createElement('td');
+					cell4.className = 'tooltip-wrap';
+					cell4.appendChild(requestUrl);
+					cell4.appendChild(tabUrl);
 
-					let requestData = document.createElement('li');
-					requestData.appendChild(container);
-					requestData.appendChild(urlWrapper);
+					let row1 = document.createElement('tr');
+					row1.appendChild(cell1);
+					row1.appendChild(cell2);
 
-					document.body.querySelector('ol').appendChild(requestData);
+					let row2 = document.createElement('tr');
+					row2.appendChild(cell3);
+					row2.appendChild(cell4);
+
+					table.appendChild(row1);
+					table.appendChild(row2);
 				}
 
 				document.body.querySelectorAll('.tooltip').forEach(item => {

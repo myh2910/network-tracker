@@ -1,34 +1,37 @@
+/* https://fonts.google.com/specimen/Inconsolata */
+@import url("https://fonts.googleapis.com/css2?family=Inconsolata:wght@600");
+@import url("https://fonts.googleapis.com/css2?family=Inconsolata:wght@700");
+
 body {
 	font-size: 13px;
-	font-family: "Consolas";
+	font-family: "Inconsolata", "Consolas", "Dejavu Sans Mono", "Courier New", monospace;
 }
 
 h1 {
-	margin: 0 4px;
-	font-size: 20px;
+	font-size: 1.7em;
 }
 
 h2 {
+	font-size: 1.3em;
+}
+
+h1,
+h2 {
 	margin: 0 4px;
-	font-size: 14px;
+	font-weight: 700;
+	white-space: nowrap;
 }
 
-ol {
-	display: none;
+table {
+	margin: 4px 0;
 }
 
-li {
-	margin-bottom: 8px;
+tr:nth-child(2n+1) > td {
+	padding-top: 5px;
 }
 
-.container > * {
-	margin: 2px 0;
-}
-
-.wrapper {
-	position: relative;
-	justify-content: center;
-	display: inline-flex;
+td:nth-child(2) {
+	width: calc(100ch * 0.9 + 7px);
 }
 
 .tooltip {
@@ -36,14 +39,10 @@ li {
 	bottom: 100%;
 	visibility: hidden;
 	opacity: 0;
-	transition: 0.175s;
-	border-radius: 3px;
-	min-width: 75px;
-	max-width: 600px;
-	padding: 1px 3px;
-	background-color: #555;
+	transition: 180ms;
+	max-width: calc(100ch + 0.5px);
+	background-color: #343434;
 	pointer-events: none;
-	font-size: 11px;
 	text-align: center;
 	color: #fff;
 }
@@ -53,32 +52,50 @@ li {
 	position: absolute;
 	top: 100%;
 	left: 50%;
-	margin-left: -3px;
-	border-width: 3px;
+	margin-left: -2.5px;
+	border-width: 2.5px;
 	border-style: solid;
-	border-color: #555 transparent transparent;
+	border-color: #343434 transparent transparent;
+}
+
+.tooltip-wrap {
+	position: relative;
+	justify-content: center;
+	display: inline-flex;
+	padding: 0;
+}
+
+.fit-content {
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	width: 100%;
+	text-align: left;
+	word-break: break-all;
 }
 
 .box {
 	border-radius: 3px;
-	padding: 0 3px;
-	font-size: 11px;
+	padding: 1px 2.5px;
+	font-size: 0.9em;
 }
 
 .button {
 	float: right;
+	margin-left: 3px;
+	background-color: slategray;
 	user-select: none;
-	background-color: gray;
 	text-decoration: none;
 	color: #fff;
 }
 
 .button:hover {
-	background-color: #101010;
+	background-color: #414952;
 }
 
 .button:active {
-	background-color: #555;
+	background-color: #525e69;
 }
 
 .request-status {
@@ -88,23 +105,25 @@ li {
 
 .request-type {
 	float: left;
-	font-size: 12px;
-	word-spacing: -1px;
+	margin-left: 3px;
+	color: #444;
 }
 
-.request-type:before {
-	content: "";
-	display: inline-block;
+.request-idx {
+	padding: 2px 3px;
+	font-weight: 700;
+	vertical-align: top;
+	text-align: right;
+	color: #1034a6;
 }
 
 .request-url {
-	display: inline-block;
 	overflow-x: auto;
-	margin-bottom: -4px;
-	border: 1px solid rgba(0, 0, 0, 0.15);
+	border: 1px solid #ccc;
 	border-radius: 2px;
-	width: 600px;
-	padding: 0 2px;
+	width: 100%;
+	padding: 1px 2px;
 	background-color: ghostwhite;
 	white-space: nowrap;
+	color: #444;
 }
