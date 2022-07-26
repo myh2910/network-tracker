@@ -28,9 +28,8 @@ function matchUrl(details) {
 
 function getHeader(headers, headerName) {
 	for (let i = 0; i < headers.length; i++) {
-		let header = headers[i];
-		if (header.name.toLowerCase() === headerName) {
-			return header;
+		if (headers[i].name.toLowerCase() === headerName) {
+			return headers[i];
 		}
 	}
 }
