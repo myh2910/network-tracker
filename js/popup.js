@@ -71,14 +71,6 @@ window.addEventListener('DOMContentLoaded', () => {
 					cell3.className = 'request-idx';
 					cell3.textContent = `[${i + 1}]:`;
 
-					let fitContent = document.createElement('span');
-					fitContent.className = 'fit-content';
-					fitContent.textContent = requests[i].tabUrl;
-
-					let tabUrl = document.createElement('div');
-					tabUrl.classList.add('box', 'tooltip');
-					tabUrl.appendChild(fitContent);
-
 					let requestUrl = document.createElement('div');
 					requestUrl.className = 'request-url';
 					requestUrl.textContent = requests[i].url;
@@ -86,7 +78,18 @@ window.addEventListener('DOMContentLoaded', () => {
 					let cell4 = document.createElement('td');
 					cell4.className = 'tooltip-wrap';
 					cell4.appendChild(requestUrl);
-					cell4.appendChild(tabUrl);
+
+					if (requests[i].tabUrl) {
+						let fitContent = document.createElement('span');
+						fitContent.className = 'fit-content';
+						fitContent.textContent = requests[i].tabUrl;
+
+						let tabUrl = document.createElement('div');
+						tabUrl.classList.add('box', 'tooltip');
+						tabUrl.appendChild(fitContent);
+
+						cell4.appendChild(tabUrl);
+					}
 
 					let row1 = document.createElement('tr');
 					row1.appendChild(cell1);
