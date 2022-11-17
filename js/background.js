@@ -1,6 +1,24 @@
+let requestHeaders = {};
+
 chrome.webNavigation.onBeforeNavigate.addListener(details => {
 	console.log('Starting...');
 });
+
+chrome.webNavigation.onCommitted.addListener(details => {
+	if (['reload', 'typed', 'generated'].includes(details.transitionType)) {
+		let data = {};
+		data[details.tabId.toString()] = [];
+		chrome.storage.local.set(data);
+	}
+});
+
+chrome.webRequest.onBeforeSendHeaders.addListener(details => {
+	if (details.tabId !== -1) {
+		requestHeaders[details.requestId] = details.requestHeaders;
+	}
+}, {
+	urls: ['<all_urls>']
+}, ['requestHeaders']);
 
 chrome.webRequest.onHeadersReceived.addListener(details => {
 	if (details.tabId !== -1) {
@@ -8,11 +26,23 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
 			details.tabUrl = tab.url;
 			let header = getHeader(details.responseHeaders, 'content-type');
 			details.mimeType = header && header.value.split(';', 1)[0];
+
 			if (matchUrl(details)) {
-				chrome.tabs.sendMessage(details.tabId, {
-					from: 'background',
-					subject: 'requestInfo',
-					content: details
+				if (requestHeaders[details.requestId]) {
+					details.requestHeaders = requestHeaders[details.requestId];
+				}
+				const tabId = details.tabId.toString();
+				chrome.storage.local.get(tabId, local => {
+					let object = local[tabId];
+					if (object) {
+						object.push(details);
+					} else {
+						object = [details];
+					}
+
+					let data = {};
+					data[tabId] = object;
+					chrome.storage.local.set(data);
 				});
 			}
 		});
@@ -21,7 +51,7 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
 	urls: ['<all_urls>']
 }, ['responseHeaders']);
 
-function matchUrl(details) {
+function matchUrl(data) {
 	// Write your custom function here
 	return true;
 }
