@@ -3,16 +3,22 @@
 	"author": "Yohan Min",
 	"name": "Network Tracker",
 	"description": "Get all network requests in a website",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"background": {
 		"service_worker": "js/background.js"
 	},
+	"content_scripts": [{
+		"matches": ["<all_urls>"],
+		"run_at": "document_start",
+		"js": ["js/content_script.js"]
+	}],
 	"permissions": [
 		"webRequest",
 		"webNavigation",
 		"tabs",
 		"activeTab",
-		"storage"
+		"storage",
+		"debugger"
 	],
 	"host_permissions": ["<all_urls>"],
 	"action": {

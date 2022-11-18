@@ -1,7 +1,43 @@
 let requestHeaders = {};
 
 chrome.webNavigation.onBeforeNavigate.addListener(details => {
-	console.log('Starting...');
+	console.log(`[${details.tabId}] Connecting to ${details.url}...`);
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+	if (message.subject === 'tabId') {
+		chrome.debugger.attach({
+				tabId: sender.tab.id
+			}, '1.0', () => {
+				chrome.debugger.sendCommand({
+					tabId: sender.tab.id
+				}, 'Network.enable');
+				chrome.debugger.onEvent.addListener(allEventHandler);
+		});
+
+		function allEventHandler(source, method, params) {
+			if (sender.tab.id !== source.tabId) {
+				return;
+			}
+
+			if (method === 'Network.responseReceived') {
+				chrome.debugger.sendCommand({
+						tabId: source.tabId
+					}, 'Network.getResponseBody', {
+						'requestId': params.requestId
+					}, response => {
+						if (response) {
+							if (response.base64Encoded) {
+								response.body = response.body.atob()
+							}
+							// DEBUG
+							// console.log(params, response.body);
+							// chrome.debugger.detach(source);
+						}
+				});
+			}
+		}
+	}
 });
 
 chrome.webNavigation.onCommitted.addListener(details => {
@@ -12,13 +48,13 @@ chrome.webNavigation.onCommitted.addListener(details => {
 	}
 });
 
-chrome.webRequest.onBeforeSendHeaders.addListener(details => {
+chrome.webRequest.onSendHeaders.addListener(details => {
 	if (details.tabId !== -1) {
 		requestHeaders[details.requestId] = details.requestHeaders;
 	}
 }, {
 	urls: ['<all_urls>']
-}, ['requestHeaders']);
+}, ['requestHeaders', 'extraHeaders']);
 
 chrome.webRequest.onHeadersReceived.addListener(details => {
 	if (details.tabId !== -1) {
@@ -49,7 +85,7 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
 	}
 }, {
 	urls: ['<all_urls>']
-}, ['responseHeaders']);
+}, ['responseHeaders', 'extraHeaders']);
 
 function matchUrl(data) {
 	// Write your custom function here
