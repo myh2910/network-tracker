@@ -115,6 +115,16 @@ function updateData(data) {
 		cell2.appendChild(copyRequestButton);
 	}
 
+	let copyDataButton = document.createElement('a');
+	copyDataButton.classList.add('box', 'button');
+	copyDataButton.textContent = 'COPY DATA';
+	copyDataButton.href = '#';
+	copyDataButton.onclick = () => {
+		navigator.clipboard.writeText(JSON.stringify(data));
+		return false;
+	};
+	cell2.appendChild(copyDataButton);
+
 	let cell3 = document.createElement('td');
 	cell3.className = 'request-idx';
 	cell3.textContent = `[${numContent}]:`;
