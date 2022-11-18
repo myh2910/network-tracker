@@ -7,11 +7,6 @@
 	"background": {
 		"service_worker": "js/background.js"
 	},
-	"content_scripts": [{
-		"matches": ["<all_urls>"],
-		"run_at": "document_start",
-		"js": ["js/content_script.js"]
-	}],
 	"permissions": [
 		"webRequest",
 		"webNavigation",
