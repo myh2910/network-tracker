@@ -27,6 +27,17 @@ window.addEventListener('DOMContentLoaded', () => {
 let contentTable = document.createElement('table');
 let numContent = 0;
 
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+	if (message.to === 'popup') {
+		if (message.from === 'content_script' && message.subject === 'update_status') {
+			let msg = contentTable.querySelector(`tr:nth-child(${2 * message.data.idx}) div.request-url`);
+			if (msg) {
+				msg.textContent = message.data.msg;
+			}
+		}
+	}
+});
+
 function updatePage(data) {
 	if (data && data.length > numContent) {
 		if (numContent === 0) {
@@ -34,6 +45,7 @@ function updatePage(data) {
 		}
 		for (let i = numContent; i < data.length; i++) {
 			numContent++;
+			data[i].idx = numContent;
 			updateData(data[i]);
 		}
 	}
@@ -65,21 +77,26 @@ function updateData(data) {
 	requestType.classList.add('box', 'request-type');
 	requestType.textContent = data.mimeType || data.type;
 
-	let copyButton = document.createElement('a');
-	copyButton.classList.add('box', 'button');
-	copyButton.textContent = 'COPY URL';
-	copyButton.href = '#';
-	copyButton.onclick = () => {
+	let copyUrlButton = document.createElement('a');
+	copyUrlButton.classList.add('box', 'button');
+	copyUrlButton.textContent = 'COPY URL';
+	copyUrlButton.href = '#';
+	copyUrlButton.onclick = () => {
 		navigator.clipboard.writeText(data.url);
 		return false;
 	};
 
-	let goButton = document.createElement('a');
-	goButton.classList.add('box', 'button');
-	goButton.textContent = 'GO';
-	goButton.href = '#';
-	goButton.onclick = () => {
-		chrome.tabs.create({url: data.url});
+	let downloadFileButton = document.createElement('a');
+	downloadFileButton.classList.add('box', 'button', 'download');
+	downloadFileButton.textContent = 'DOWNLOAD';
+	downloadFileButton.href = '#';
+	downloadFileButton.onclick = () => {
+		chrome.runtime.sendMessage({
+			from: 'popup',
+			to: 'background',
+			subject: 'download_file',
+			data: data
+		});
 		return false;
 	};
 
@@ -88,8 +105,7 @@ function updateData(data) {
 	let cell2 = document.createElement('td');
 	cell2.appendChild(statusWrapper);
 	cell2.appendChild(requestType);
-	cell2.appendChild(goButton);
-	cell2.appendChild(copyButton);
+	cell2.appendChild(copyUrlButton);
 
 	if (data.responseHeaders) {
 		let copyResponseButton = document.createElement('a');
@@ -115,15 +131,24 @@ function updateData(data) {
 		cell2.appendChild(copyRequestButton);
 	}
 
-	let copyDataButton = document.createElement('a');
-	copyDataButton.classList.add('box', 'button');
-	copyDataButton.textContent = 'COPY DATA';
-	copyDataButton.href = '#';
-	copyDataButton.onclick = () => {
-		navigator.clipboard.writeText(JSON.stringify(data));
-		return false;
-	};
-	cell2.appendChild(copyDataButton);
+	if (matchPlaylist(data)) {
+		let downloadPlaylistButton = document.createElement('a');
+		downloadPlaylistButton.classList.add('box', 'button', 'download');
+		downloadPlaylistButton.textContent = 'DOWNLOAD PLAYLIST';
+		downloadPlaylistButton.href = '#';
+		downloadPlaylistButton.onclick = () => {
+			chrome.runtime.sendMessage({
+				from: 'popup',
+				to: 'background',
+				subject: 'download_playlist',
+				data: data
+			});
+			return false;
+		};
+		cell2.appendChild(downloadPlaylistButton);
+	}
+
+	cell2.appendChild(downloadFileButton);
 
 	let cell3 = document.createElement('td');
 	cell3.className = 'request-idx';
@@ -162,6 +187,14 @@ function updateData(data) {
 
 	contentTable.appendChild(row1);
 	contentTable.appendChild(row2);
+}
+
+function matchPlaylist(data) {
+	// Define your custom rules here
+	return (
+		data.mimeType === 'application/vnd.apple.mpegurl'
+		|| data.url.includes('.m3u8')
+	);
 }
 
 function copyJSON(object) {
