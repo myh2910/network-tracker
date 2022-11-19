@@ -4,9 +4,9 @@ A Chrome extension to get all network requests in a website. Look how it works i
 
 ![Screenshot](assets/screenshot.png)
 
-## Example
+## Examples
 
-Define your custom rules in `matchUrl` function in [background.js](js/background.js).
+In `matchUrl` function at [background.js](js/background.js):
 
 ```js
 function matchUrl(data) {
@@ -14,13 +14,41 @@ function matchUrl(data) {
 	if (data.tabUrl.match(/https?:\/\/example\.com/g)) {
 		return (
 			data.mimeType === 'application/vnd.apple.mpegurl'
-			|| data.mimeType === 'video/MP2T'
-			|| data.mimeType === 'text/vtt'
-			|| data.url.includes('/ajax/episode/subtitles/')
-			|| data.url.includes('master.txt')
 			|| data.url.includes('.m3u8')
 			|| data.url.includes('.ts')
 			|| data.url.includes('.srt')
+		);
+	}
+	...
+	return false;
+}
+```
+
+In `sanitizeUrl` function at [background.js](js/background.js):
+
+```js
+function sanitizeUrl(url) {
+	...
+	if (url.match(/https?:\/\/example\.com\/.*&url=.*/g)) {
+		matches = Array.from(url.matchAll(/https?:\/\/example\.com\/.*&url=(.*)/g));
+		if (matches[0].length === 2) {
+			return matches[0][1];
+		}
+	}
+	...
+	return url;
+}
+```
+
+In `matchPlaylist` function at [popup.js](js/popup.js):
+
+```js
+function matchPlaylist(data) {
+	...
+	if (data.tabUrl.match(/https?:\/\/example\.com/g)) {
+		return (
+			data.mimeType === 'application/vnd.apple.mpegurl'
+			|| data.url.includes('.m3u8')
 		);
 	}
 	...
@@ -35,3 +63,4 @@ function matchUrl(data) {
 - <https://stackoverflow.com/questions/20019958>
 - <https://stackoverflow.com/questions/16096482>
 - <https://stackoverflow.com/questions/66618136>
+- <https://javascript.info/fetch>
