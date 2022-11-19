@@ -6,7 +6,23 @@ A Chrome extension to get all network requests in a website. Look how it works i
 
 ## Examples
 
-In `matchUrl` function at [background.js](js/background.js):
+In `sanitizeUrl` function at [background.js](js/background.js#L94-L103):
+
+```js
+function sanitizeUrl(url) {
+	...
+	if (url.match(/https?:\/\/example\.com\/.*&url=.*/g)) {
+		matches = Array.from(url.matchAll(/https?:\/\/example\.com\/.*&url=(.*)/g));
+		if (matches[0].length === 2) {
+			return matches[0][1];
+		}
+	}
+	...
+	return url;
+}
+```
+
+In `matchUrl` function at [background.js](js/background.js#L105-L108):
 
 ```js
 function matchUrl(data) {
@@ -24,23 +40,7 @@ function matchUrl(data) {
 }
 ```
 
-In `sanitizeUrl` function at [background.js](js/background.js):
-
-```js
-function sanitizeUrl(url) {
-	...
-	if (url.match(/https?:\/\/example\.com\/.*&url=.*/g)) {
-		matches = Array.from(url.matchAll(/https?:\/\/example\.com\/.*&url=(.*)/g));
-		if (matches[0].length === 2) {
-			return matches[0][1];
-		}
-	}
-	...
-	return url;
-}
-```
-
-In `matchPlaylist` function at [popup.js](js/popup.js):
+In `matchPlaylist` function at [popup.js](js/popup.js#L192-L198):
 
 ```js
 function matchPlaylist(data) {
