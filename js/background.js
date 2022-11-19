@@ -72,7 +72,7 @@ async function downloadPlaylist(data) {
 	try {
 		const res = await fetch(data.url);
 		const text = await res.text();
-		const urls = Array.from((text + '\n').matchAll(/,\n(.*)\n/g), match => 
+		const urls = Array.from((text + '\n').matchAll(/,\n(.*)\n/g), match =>
 			sanitizeUrl(new URL(match[1], data.url).href)
 		);
 		chrome.tabs.sendMessage(data.tabId, {
