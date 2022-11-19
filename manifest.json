@@ -3,16 +3,23 @@
 	"author": "myh2910",
 	"name": "Network Tracker",
 	"description": "Get all network requests in a website",
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"background": {
 		"service_worker": "js/background.js"
 	},
+	"content_scripts": [{
+		"matches": ["<all_urls>"],
+		"run_at": "document_start",
+		"js": ["js/content_script.js"]
+	}],
 	"permissions": [
-		"webRequest",
 		"webNavigation",
+		"webRequest",
 		"tabs",
 		"activeTab",
-		"storage"
+		"downloads",
+		"storage",
+		"unlimitedStorage"
 	],
 	"host_permissions": ["<all_urls>"],
 	"action": {
