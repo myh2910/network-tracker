@@ -39,6 +39,7 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
 			if (!tab) {
 				return;
 			}
+
 			details.tabUrl = tab.url;
 			let header = getHeader(details.responseHeaders, 'content-type');
 			details.mimeType = header && header.value.split(';', 1)[0];
