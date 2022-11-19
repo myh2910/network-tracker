@@ -91,11 +91,15 @@ td:nth-child(2) {
 }
 
 .button:hover {
-	background-color: #414952;
+	filter: brightness(85%);
 }
 
 .button:active {
-	background-color: #525e69;
+	filter: brightness(70%);
+}
+
+.download {
+	background-color: #907070;
 }
 
 .request-status {
