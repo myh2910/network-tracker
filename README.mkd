@@ -6,7 +6,7 @@ A Chrome extension to get all network requests in a website. Look how it works i
 
 ## Examples
 
-In `sanitizeUrl` function at [background.js](js/background.js#L94-L103):
+In `sanitizeUrl` function at [background.js](js/background.js#L163-L172):
 
 ```js
 function sanitizeUrl(url) {
@@ -22,7 +22,7 @@ function sanitizeUrl(url) {
 }
 ```
 
-In `matchUrl` function at [background.js](js/background.js#L105-L108):
+In `matchUrl` function at [background.js](js/background.js#L174-L177):
 
 ```js
 function matchUrl(data) {
@@ -40,7 +40,7 @@ function matchUrl(data) {
 }
 ```
 
-In `matchPlaylist` function at [popup.js](js/popup.js#L192-L198):
+In `matchPlaylist` function at [popup.js](js/popup.js#L193-L200):
 
 ```js
 function matchPlaylist(data) {
@@ -48,6 +48,7 @@ function matchPlaylist(data) {
 	if (data.tabUrl.match(/https?:\/\/example\.com/g)) {
 		return (
 			data.mimeType === 'application/vnd.apple.mpegurl'
+			|| data.url.includes('master.txt')
 			|| data.url.includes('.m3u8')
 		);
 	}
