@@ -2,33 +2,43 @@ let arrayBuffers = {};
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message.to === 'content_script') {
-		if (message.from === 'background' && message.subject === 'alert') {
-			alert(message.data);
-		} else if (message.from === 'background' && message.subject === 'download_playlist') {
+		if (message.from === 'popup' && message.subject === 'download_playlist') {
 			downloadPlaylist(message.data);
+		} else if (message.from === 'background' && message.subject === 'array_buffers_to_blob') {
+			arrayBuffersToBlob(message.data);
+		} else if (message.from === 'background' && message.subject === 'blob_to_url') {
+			blobToURL(message.data);
+		} else if (message.from === 'background' && message.subject === 'error') {
+			alert(message.data);
 		}
 	}
 });
 
 function downloadPlaylist(data) {
 	try {
-		let i = 0;
-		const array = new Uint32Array(data.arrayLength).fill().map(() => data.array[i++]);
-		if (data.urlsIdx === 0) {
-			arrayBuffers[data.requestId] = [];
-		} if (arrayBuffers[data.requestId]) {
-			arrayBuffers[data.requestId].push(array.buffer);
+		if (arrayBuffers[data.requestId] instanceof Blob) {
+			blobToURL(data);
+		} else {
+			chrome.runtime.sendMessage({
+				from: 'content_script',
+				to: 'background',
+				subject: 'get_array_buffers',
+				data: data
+			});
 		}
-		if (data.urlsIdx + 1 === data.urlsLength) {
-			if (arrayBuffers[data.requestId].length !== data.urlsLength) {
-				throw `Cannot download ${data.url}`;
-			}
-			const blob = new Blob(arrayBuffers[data.requestId], {type: 'video/mp4'});
+	} catch (err) {
+		alert(`Error: ${err}`);
+	}
+}
+
+function blobToURL(data) {
+	try {
+		if (arrayBuffers[data.requestId] instanceof Blob) {
 			chrome.runtime.sendMessage({
 					from: 'content_script',
 					to: 'background',
-					subject: 'download_playlist',
-					data: URL.createObjectURL(blob)
+					subject: 'download_blob_url',
+					data: URL.createObjectURL(arrayBuffers[data.requestId])
 				}, url => {
 					URL.revokeObjectURL(url);
 			});
@@ -39,9 +49,28 @@ function downloadPlaylist(data) {
 				data: {
 					tabId: data.tabId,
 					idx: data.idx,
-					msg: data.url
+					msg: data.url,
+					function: 'end-highlight'
 				}
 			}, () => chrome.runtime.lastError);
+		}
+	} catch (err) {
+		alert(`Error: ${err}`);
+	}
+}
+
+function arrayBuffersToBlob(data) {
+	try {
+		if (!arrayBuffers[data.requestId]) {
+			arrayBuffers[data.requestId] = new Array(data.arrayBuffersLength);
+		}
+		if (arrayBuffers[data.requestId] instanceof Array) {
+			let i = 0;
+			const array = new Uint32Array(data.arrayLength).fill().map(() => data.array[i++]);
+			arrayBuffers[data.requestId][data.arrayBuffersIdx] = array.buffer;
+			if (arrayBuffers[data.requestId].filter(Boolean).length === data.arrayBuffersLength) {
+				arrayBuffers[data.requestId] = new Blob(arrayBuffers[data.requestId], {type: 'video/mp4'});
+			}
 		}
 	} catch (err) {
 		alert(`Error: ${err}`);
