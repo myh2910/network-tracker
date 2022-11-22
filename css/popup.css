@@ -1,4 +1,4 @@
-/* https://fonts.google.com/specimen/Inconsolata */
+/* Font: https://fonts.google.com/specimen/Inconsolata */
 @import url("https://fonts.googleapis.com/css2?family=Inconsolata:wght@600");
 @import url("https://fonts.googleapis.com/css2?family=Inconsolata:wght@700");
 
@@ -24,14 +24,48 @@ h2 {
 
 table {
 	margin: 4px 0;
+	border-spacing: 0;
+}
+
+tr:nth-child(2n) > td {
+	padding-bottom: 2px;
 }
 
 tr:nth-child(2n+1) > td {
-	padding-top: 5px;
+	padding-top: 2px;
 }
 
 td:nth-child(2) {
-	width: calc(100ch * 0.9 + 7px);
+	width: calc(100ch * 0.9 + 5px);
+	padding-right: 2px;
+}
+
+.focused {
+	background-color: #ddd;
+}
+
+.highlight {
+	background-color: palegreen;
+}
+
+.copy {
+	background-color: slategray;
+}
+
+.download {
+	background-color: #907070;
+}
+
+.change-color {
+	animation: 500ms changeColor;
+}
+
+@keyframes changeColor {
+	from {
+		background-color: limegreen;
+	} to {
+		background-color: palegreen;
+	}
 }
 
 .tooltip {
@@ -84,7 +118,6 @@ td:nth-child(2) {
 .button {
 	float: right;
 	margin-left: 3px;
-	background-color: slategray;
 	user-select: none;
 	text-decoration: none;
 	color: #fff;
@@ -96,10 +129,6 @@ td:nth-child(2) {
 
 .button:active {
 	filter: brightness(70%);
-}
-
-.download {
-	background-color: #907070;
 }
 
 .request-status {
