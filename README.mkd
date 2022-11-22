@@ -1,18 +1,18 @@
 # ![Icon](assets/icon_32.png) Network Tracker
 
-A Chrome extension to get all network requests in a website. Look how it works in the current GitHub repo page:
+A Chrome extension to get all network requests in a website and download files and videos from the internet.
 
 ![Screenshot](assets/screenshot.png)
 
 ## Examples
 
-In `sanitizeUrl` function at [background.js](js/background.js#L163-L172):
+In `sanitizeURL` function at [background.js](js/background.js#L175-L184):
 
 ```js
-function sanitizeUrl(url) {
+function sanitizeURL(url) {
 	...
-	if (url.match(/https?:\/\/example\.com\/.*&url=.*/g)) {
-		matches = Array.from(url.matchAll(/https?:\/\/example\.com\/.*&url=(.*)/g));
+	if (url.match(/googleusercontent\.com\/.*&url=.*/g)) {
+		matches = Array.from(url.matchAll(/googleusercontent\.com\/.*&url=(.*)/g));
 		if (matches[0].length === 2) {
 			return matches[0][1];
 		}
@@ -22,17 +22,19 @@ function sanitizeUrl(url) {
 }
 ```
 
-In `matchUrl` function at [background.js](js/background.js#L174-L177):
+In `matchURL` function at [background.js](js/background.js#L186-L189):
 
 ```js
-function matchUrl(data) {
+function matchURL(data) {
 	...
-	if (data.tabUrl.match(/https?:\/\/example\.com/g)) {
+	if (data.tabURL.match(/https?:\/\/example\.com/g)) {
 		return (
-			data.mimeType === 'application/vnd.apple.mpegurl'
-			|| data.url.includes('.m3u8')
-			|| data.url.includes('.ts')
-			|| data.url.includes('.srt')
+			(data.mimeType && (
+				data.mimeType === 'application/vnd.apple.mpegurl'
+				|| data.mimeType.match(/^(video|audio)/g)
+			))
+			|| data.url.match(/^(?!.*\bthumbnails\.vtt\b).*\.(m3u8|aaa|ts|vtt|srt)\b/g)
+			|| data.url.match(/\bmaster\.txt\b/g)
 		);
 	}
 	...
@@ -40,16 +42,17 @@ function matchUrl(data) {
 }
 ```
 
-In `matchPlaylist` function at [popup.js](js/popup.js#L193-L200):
+In `matchPlaylist` function at [popup.js](js/popup.js#L209-L217):
 
 ```js
 function matchPlaylist(data) {
 	...
-	if (data.tabUrl.match(/https?:\/\/example\.com/g)) {
+	if (data.tabURL.match(/https?:\/\/example\.com/g)) {
 		return (
 			data.mimeType === 'application/vnd.apple.mpegurl'
 			|| data.url.includes('master.txt')
 			|| data.url.includes('.m3u8')
+			|| data.url.includes('/m3/')
 		);
 	}
 	...
