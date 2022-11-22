@@ -2,9 +2,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message.to === 'background') {
 		if (message.from === 'popup' && message.subject === 'download_file') {
 			chrome.downloads.download({url: message.data.url});
-		} else if (message.from === 'popup' && message.subject === 'download_playlist') {
-			downloadPlaylist(message.data);
-		} else if (message.from === 'content_script' && message.subject === 'download_playlist') {
+		} else if (message.from === 'content_script' && message.subject === 'get_array_buffers') {
+			getArrayBuffers(message.data);
+		} else if (message.from === 'content_script' && message.subject === 'download_blob_url') {
 			chrome.downloads.download({url: message.data});
 			sendResponse(message.data);
 		}
@@ -40,11 +40,11 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
 				return;
 			}
 
-			details.tabUrl = tab.url;
+			details.tabURL = tab.url;
 			let header = getHeader(details.responseHeaders, 'content-type');
 			details.mimeType = header && header.value.split(';', 1)[0];
 
-			if (matchUrl(details)) {
+			if (matchURL(details)) {
 				if (requestHeaders[details.requestId]) {
 					details.requestHeaders = requestHeaders[details.requestId];
 				}
@@ -67,11 +67,82 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
 	urls: ['<all_urls>']
 }, ['responseHeaders', 'extraHeaders']);
 
-async function getPlaylistUrl(data) {
+async function getArrayBuffers(data) {
+	try {
+		const urls = await getPlaylistURL(data);
+		if (!urls) {
+			throw `Cannot download ${data.url}`;
+		}
+		for (const [i, url] of urls.entries()) {
+			console.log(`[${data.tabId}] [${data.requestId} ${i + 1}/${urls.length}] ${url}`);
+			chrome.runtime.sendMessage({
+				from: 'background',
+				to: 'popup',
+				subject: 'update_status',
+				data: {
+					tabId: data.tabId,
+					idx: data.idx,
+					msg: `[${i + 1}/${urls.length}] ${url}`,
+					function: 'highlight'
+				}
+			}, () => chrome.runtime.lastError);
+			try {
+				const res = await fetch(url);
+				const arrayBuffer = await res.arrayBuffer();
+				const array = new Uint32Array(arrayBuffer);
+				chrome.tabs.sendMessage(data.tabId, {
+					from: 'background',
+					to: 'content_script',
+					subject: 'array_buffers_to_blob',
+					data: {
+						tabId: data.tabId,
+						requestId: data.requestId,
+						idx: data.idx,
+						url: data.url,
+						array: array,
+						arrayLength: array.length,
+						arrayBuffersIdx: i,
+						arrayBuffersLength: urls.length,
+					}
+				});
+			} catch (err) {
+				console.log(`[${data.tabId}] [${data.requestId} ${i + 1}/${urls.length}] Error: ${err}`);
+				chrome.tabs.sendMessage(data.tabId, {
+					from: 'background',
+					to: 'content_script',
+					subject: 'error',
+					data: `[${i + 1}/${urls.length}] Error: ${err}`
+				});
+				return;
+			}
+		}
+		chrome.tabs.sendMessage(data.tabId, {
+			from: 'background',
+			to: 'content_script',
+			subject: 'blob_to_url',
+			data: {
+				tabId: data.tabId,
+				requestId: data.requestId,
+				idx: data.idx,
+				url: data.url
+			}
+		});
+	} catch (err) {
+		console.log(`[${data.tabId}] [${data.requestId}] Error: ${err}`);
+		chrome.tabs.sendMessage(data.tabId, {
+			from: 'background',
+			to: 'content_script',
+			subject: 'error',
+			data: `Error: ${err}`
+		});
+	}
+}
+
+async function getPlaylistURL(data) {
 	let res = await fetch(data.url);
 	let text = await res.text() + '\n';
 	let urls = Array.from(text.matchAll(/,\n(.*)\n/g), match =>
-		sanitizeUrl(new URL(match[1], data.url).href)
+		sanitizeURL(new URL(match[1], data.url).href)
 	);
 	if (urls.length !== 0) {
 		return urls;
@@ -83,7 +154,7 @@ async function getPlaylistUrl(data) {
 		if (idx !== -1) {
 			height = height.substring(0, idx);
 		}
-		urls[height] = sanitizeUrl(new URL(match[2], data.url).href);
+		urls[height] = sanitizeURL(new URL(match[2], data.url).href);
 		return parseInt(height);
 	});
 	if (heights.length === 0) {
@@ -93,7 +164,7 @@ async function getPlaylistUrl(data) {
 	res = await fetch(urls[maxHeight]);
 	text = await res.text() + '\n';
 	urls = Array.from(text.matchAll(/,\n(.*)\n/g), match =>
-		sanitizeUrl(new URL(match[1], urls[maxHeight]).href)
+		sanitizeURL(new URL(match[1], urls[maxHeight]).href)
 	);
 	if (urls.length !== 0) {
 		return urls;
@@ -101,66 +172,7 @@ async function getPlaylistUrl(data) {
 	return false;
 }
 
-async function downloadPlaylist(data) {
-	try {
-		const urls = await getPlaylistUrl(data);
-		if (!urls) {
-			throw `Cannot download ${data.url}`;
-		}
-		for (const [i, url] of urls.entries()) {
-			console.log(`[${data.tabId}] [${data.requestId} ${i + 1}/${urls.length}] ${url}`);
-			chrome.runtime.sendMessage({
-				from: 'background',
-				to: 'popup',
-				subject: 'update_status',
-				data: {
-					tabId: data.tabId.toString(),
-					idx: data.idx,
-					msg: `[${i + 1}/${urls.length}] ${url}`
-				}
-			}, () => chrome.runtime.lastError);
-			try {
-				const res = await fetch(url);
-				const arrayBuffer = await res.arrayBuffer();
-				const array = new Uint32Array(arrayBuffer);
-				chrome.tabs.sendMessage(data.tabId, {
-					from: 'background',
-					to: 'content_script',
-					subject: 'download_playlist',
-					data: {
-						tabId: data.tabId.toString(),
-						requestId: data.requestId.toString(),
-						array: array,
-						arrayLength: array.length,
-						urlsIdx: i,
-						urlsLength: urls.length,
-						idx: data.idx,
-						url: data.url
-					}
-				});
-			} catch (err) {
-				console.log(`[${data.tabId}] [${data.requestId} ${i + 1}/${urls.length}] Error: ${err}`);
-				chrome.tabs.sendMessage(data.tabId, {
-					from: 'background',
-					to: 'content_script',
-					subject: 'alert',
-					data: `[${i + 1}/${urls.length}] Error: ${err}`
-				});
-				return;
-			}
-		}
-	} catch (err) {
-		console.log(`[${data.tabId}] [${data.requestId}] Error: ${err}`);
-		chrome.tabs.sendMessage(data.tabId, {
-			from: 'background',
-			to: 'content_script',
-			subject: 'alert',
-			data: `Error: ${err}`
-		});
-	}
-}
-
-function sanitizeUrl(url) {
+function sanitizeURL(url) {
 	// Define your custom rules here
 	if (url.match(/googleusercontent\.com\/.*&url=.*/g)) {
 		matches = Array.from(url.matchAll(/googleusercontent\.com\/.*&url=(.*)/g));
@@ -171,7 +183,7 @@ function sanitizeUrl(url) {
 	return url;
 }
 
-function matchUrl(data) {
+function matchURL(data) {
 	// Define your custom rules here
 	return true;
 }
