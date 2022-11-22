@@ -6,29 +6,46 @@ window.addEventListener('DOMContentLoaded', () => {
 			active: true,
 			currentWindow: true
 		}, tabs => {
-			const tabId = tabs[0].id.toString();
-
-			let contentTable = document.createElement('table');
+			const tabId = tabs[0].id;
+			const contentTable = document.createElement('table');
 
 			chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 				if (message.to === 'popup' && message.data.tabId === tabId) {
 					if (message.subject === 'update_status') {
-						let msg = contentTable.querySelector(`tr:nth-child(${2 * message.data.idx}) div.request-url`);
-						if (msg) {
-							msg.textContent = message.data.msg;
+						const row1 = contentTable.querySelector(`tr:nth-child(${2 * message.data.idx - 1})`);
+						if (!row1) {
+							return;
+						}
+						const row2 = row1.nextElementSibling;
+						if (message.data.msg) {
+							const cell = row2.querySelector('div.request-url');
+							cell.textContent = message.data.msg;
+						}
+						if (message.data.function === 'highlight') {
+							row1.classList.add('change-color');
+							row2.classList.add('change-color');
+							setTimeout(() => {
+								row1.classList.remove('change-color');
+								row2.classList.remove('change-color');
+								row1.classList.add('highlight');
+								row2.classList.add('highlight');
+							}, 500);
+						} else if (message.data.function === 'end-highlight') {
+							row1.classList.remove('highlight');
+							row2.classList.remove('highlight');
 						}
 					}
 				}
 			});
 
-			chrome.storage.local.get(tabId, local => {
-				updatePage(local[tabId]);
+			chrome.storage.local.get(tabId.toString(), local => {
+				updatePage(local[tabId.toString()]);
 			});
 
 			chrome.storage.onChanged.addListener((changes, name) => {
 				if (name === 'local') {
-					for (let [key, {oldValue, newValue}] of Object.entries(changes)) {
-						if (key === tabId) {
+					for (const [key, {oldValue, newValue}] of Object.entries(changes)) {
+						if (key === tabId.toString()) {
 							updatePage(newValue);
 						}
 					}
@@ -51,20 +68,20 @@ window.addEventListener('DOMContentLoaded', () => {
 			}
 
 			function updateData(data) {
-				let statusCode = document.createElement('div');
+				const statusCode = document.createElement('div');
 				statusCode.classList.add('box', 'request-status');
 				statusCode.textContent = data.statusCode;
 				statusCode.style.background = [
 					'blue', 'green', 'orange', 'red', 'red'
 				][Math.floor(data.statusCode / 100) - 1];
 
-				let statusWrapper = document.createElement('div');
+				const statusWrapper = document.createElement('div');
 				statusWrapper.className = 'tooltip-wrap';
 				statusWrapper.style.float = 'left';
 				statusWrapper.appendChild(statusCode);
 
 				if (data.statusLine !== '') {
-					let statusLine = document.createElement('div');
+					const statusLine = document.createElement('div');
 					statusLine.classList.add('box', 'tooltip');
 					statusLine.textContent = data.statusLine;
 					statusLine.style.minWidth = '12ch';
@@ -72,20 +89,20 @@ window.addEventListener('DOMContentLoaded', () => {
 					statusWrapper.appendChild(statusLine);
 				}
 
-				let requestType = document.createElement('div');
+				const requestType = document.createElement('div');
 				requestType.classList.add('box', 'request-type');
 				requestType.textContent = data.mimeType || data.type;
 
-				let copyUrlButton = document.createElement('a');
-				copyUrlButton.classList.add('box', 'button');
-				copyUrlButton.textContent = 'COPY URL';
-				copyUrlButton.href = '#';
-				copyUrlButton.onclick = () => {
+				const copyURLButton = document.createElement('a');
+				copyURLButton.classList.add('box', 'button', 'copy');
+				copyURLButton.textContent = 'COPY URL';
+				copyURLButton.href = '#';
+				copyURLButton.onclick = () => {
 					navigator.clipboard.writeText(data.url);
 					return false;
 				};
 
-				let downloadFileButton = document.createElement('a');
+				const downloadFileButton = document.createElement('a');
 				downloadFileButton.classList.add('box', 'button', 'download');
 				downloadFileButton.textContent = 'DOWNLOAD';
 				downloadFileButton.href = '#';
@@ -99,16 +116,16 @@ window.addEventListener('DOMContentLoaded', () => {
 					return false;
 				};
 
-				let cell1 = document.createElement('td');
+				const cell1 = document.createElement('td');
 
-				let cell2 = document.createElement('td');
+				const cell2 = document.createElement('td');
 				cell2.appendChild(statusWrapper);
 				cell2.appendChild(requestType);
-				cell2.appendChild(copyUrlButton);
+				cell2.appendChild(copyURLButton);
 
 				if (data.responseHeaders) {
-					let copyResponseButton = document.createElement('a');
-					copyResponseButton.classList.add('box', 'button');
+					const copyResponseButton = document.createElement('a');
+					copyResponseButton.classList.add('box', 'button', 'copy');
 					copyResponseButton.textContent = 'COPY RESPONSE';
 					copyResponseButton.href = '#';
 					copyResponseButton.onclick = () => {
@@ -119,8 +136,8 @@ window.addEventListener('DOMContentLoaded', () => {
 				}
 
 				if (data.requestHeaders) {
-					let copyRequestButton = document.createElement('a');
-					copyRequestButton.classList.add('box', 'button');
+					const copyRequestButton = document.createElement('a');
+					copyRequestButton.classList.add('box', 'button', 'copy');
 					copyRequestButton.textContent = 'COPY REQUEST';
 					copyRequestButton.href = '#';
 					copyRequestButton.onclick = () => {
@@ -131,14 +148,14 @@ window.addEventListener('DOMContentLoaded', () => {
 				}
 
 				if (matchPlaylist(data)) {
-					let downloadPlaylistButton = document.createElement('a');
+					const downloadPlaylistButton = document.createElement('a');
 					downloadPlaylistButton.classList.add('box', 'button', 'download');
 					downloadPlaylistButton.textContent = 'DOWNLOAD PLAYLIST';
 					downloadPlaylistButton.href = '#';
 					downloadPlaylistButton.onclick = () => {
-						chrome.runtime.sendMessage({
+						chrome.tabs.sendMessage(tabId, {
 							from: 'popup',
-							to: 'background',
+							to: 'content_script',
 							subject: 'download_playlist',
 							data: data
 						});
@@ -149,40 +166,39 @@ window.addEventListener('DOMContentLoaded', () => {
 
 				cell2.appendChild(downloadFileButton);
 
-				let cell3 = document.createElement('td');
+				const cell3 = document.createElement('td');
 				cell3.className = 'request-idx';
 				cell3.textContent = `[${numContent}]:`;
 
-				let requestUrl = document.createElement('div');
-				requestUrl.className = 'request-url';
-				requestUrl.textContent = data.url;
+				const requestURL = document.createElement('div');
+				requestURL.className = 'request-url';
+				requestURL.textContent = data.url;
 
-				let cell4 = document.createElement('td');
+				const cell4 = document.createElement('td');
 				cell4.className = 'tooltip-wrap';
-				cell4.appendChild(requestUrl);
+				cell4.appendChild(requestURL);
 
-				if (data.tabUrl) {
-					let fitContent = document.createElement('span');
+				if (data.tabURL) {
+					const fitContent = document.createElement('span');
 					fitContent.className = 'fit-content';
-					fitContent.textContent = data.tabUrl;
+					fitContent.textContent = data.tabURL;
 
-					let tabUrl = document.createElement('div');
-					tabUrl.classList.add('box', 'tooltip');
-					tabUrl.appendChild(fitContent);
+					const tabURL = document.createElement('div');
+					tabURL.classList.add('box', 'tooltip');
+					tabURL.appendChild(fitContent);
 
-					cell4.appendChild(tabUrl);
+					cell4.appendChild(tabURL);
 				}
 
-				let row1 = document.createElement('tr');
+				const row1 = document.createElement('tr');
 				row1.appendChild(cell1);
 				row1.appendChild(cell2);
 
-				let row2 = document.createElement('tr');
+				const row2 = document.createElement('tr');
 				row2.appendChild(cell3);
 				row2.appendChild(cell4);
 
-				row1.querySelectorAll('.tooltip').forEach(tooltipHover);
-				row2.querySelectorAll('.tooltip').forEach(tooltipHover);
+				animateOnHover(row1, row2);
 
 				contentTable.appendChild(row1);
 				contentTable.appendChild(row2);
@@ -196,27 +212,40 @@ function matchPlaylist(data) {
 		data.mimeType === 'application/vnd.apple.mpegurl'
 		|| data.url.includes('master.txt')
 		|| data.url.includes('.m3u8')
+		|| data.url.includes('/m3/')
 	);
 }
 
 function copyJSON(object) {
-	str = '{\n';
+	let text = '{\n';
 	object.forEach(item => {
-		str += `\t'${item.name.replace(/'/g, '\\\'')}': '${item.value.replace(/'/g, '\\\'')}',\n`
+		text += `\t'${item.name.replace(/'/g, '\\\'')}': '${item.value.replace(/'/g, '\\\'')}',\n`
 	});
-	str += '}';
-	navigator.clipboard.writeText(str);
+	text += '}';
+	navigator.clipboard.writeText(text);
 }
 
-function tooltipHover(item) {
-	item.previousElementSibling.onmouseenter = () => {
-		item.style.bottom = 'calc(100% + 3px)';
-		item.style.visibility = 'visible';
-		item.style.opacity = '1';
-	};
-	item.previousElementSibling.onmouseleave = () => {
-		item.style.bottom = '100%';
-		item.style.visibility = 'hidden';
-		item.style.opacity = '0';
-	};
+function animateOnHover(row1, row2) {
+	for (const row of [row1, row2]) {
+		row.onmouseenter = () => {
+			row1.classList.add('focused');
+			row2.classList.add('focused');
+		};
+		row.onmouseleave = () => {
+			row1.classList.remove('focused');
+			row2.classList.remove('focused');
+		};
+		row.querySelectorAll('.tooltip').forEach(item => {
+			item.previousElementSibling.onmouseenter = () => {
+				item.style.bottom = 'calc(100% + 3px)';
+				item.style.visibility = 'visible';
+				item.style.opacity = '1';
+			};
+			item.previousElementSibling.onmouseleave = () => {
+				item.style.bottom = '100%';
+				item.style.visibility = 'hidden';
+				item.style.opacity = '0';
+			};
+		});
+	}
 }
