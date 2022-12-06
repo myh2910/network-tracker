@@ -1,65 +1,49 @@
+const requestHeaders = {};
+const videoFragments = {};
+const fragmentArrays = {};
+const startTime = Date.now();
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message.to === 'background') {
-		if (message.from === 'popup' && message.subject === 'download_file') {
-			chrome.downloads.download({url: message.data.url});
-		} else if (message.from === 'content_script' && message.subject === 'get_array_buffers') {
-			getArrayBuffers(message.data);
-		} else if (message.from === 'content_script' && message.subject === 'download_blob_url') {
-			chrome.downloads.download({url: message.data});
-			sendResponse(message.data);
+		if (message.subject === 'download_file') {
+			downloadFile(message.data, message.revokeURL, sendResponse);
+		} else if (message.subject === 'get_arrays') {
+			getArrays(message.data);
 		}
 	}
 });
 
-chrome.webNavigation.onBeforeNavigate.addListener(details => {
-	console.log(`[${details.tabId}] Connecting to ${details.url}...`);
+chrome.webNavigation.onBeforeNavigate.addListener(data => {
+	console.log(`[${elapsedTime()}s] [T${data.tabId}] ${data.url}`);
 });
 
-chrome.webNavigation.onCommitted.addListener(details => {
-	if (['reload', 'typed', 'generated'].includes(details.transitionType)) {
-		let data = {};
-		data[details.tabId.toString()] = [];
-		chrome.storage.local.set(data);
+chrome.webNavigation.onCommitted.addListener(data => {
+	if (['reload', 'typed', 'generated'].includes(data.transitionType)) {
+		chrome.storage.local.remove(data.tabId.toString());
 	}
 });
 
-let requestHeaders = {};
-
-chrome.webRequest.onSendHeaders.addListener(details => {
-	if (details.tabId !== -1) {
-		requestHeaders[details.requestId] = details.requestHeaders;
+chrome.webRequest.onSendHeaders.addListener(data => {
+	if (data.tabId !== -1) {
+		requestHeaders[data.requestId] = data.requestHeaders;
 	}
 }, {
 	urls: ['<all_urls>']
 }, ['requestHeaders', 'extraHeaders']);
 
-chrome.webRequest.onHeadersReceived.addListener(details => {
-	if (details.tabId !== -1) {
-		chrome.tabs.get(details.tabId, tab => {
+chrome.webRequest.onHeadersReceived.addListener(data => {
+	if (data.tabId !== -1) {
+		chrome.tabs.get(data.tabId, tab => {
 			if (!tab) {
 				return;
 			}
 
-			details.tabURL = tab.url;
-			let header = getHeader(details.responseHeaders, 'content-type');
-			details.mimeType = header && header.value.split(';', 1)[0];
+			data.tabURL = tab.url;
+			const header = getHeader(data.responseHeaders, 'content-type');
+			data.mimeType = header && header.value.split(';', 1)[0];
 
-			if (matchURL(details)) {
-				if (requestHeaders[details.requestId]) {
-					details.requestHeaders = requestHeaders[details.requestId];
-				}
-				const tabId = details.tabId.toString();
-				chrome.storage.local.get(tabId, local => {
-					let object = local[tabId];
-					if (!object) {
-						object = [];
-					}
-					object.push(details);
-
-					let data = {};
-					data[tabId] = object;
-					chrome.storage.local.set(data);
-				});
+			if (matchURL(data)) {
+				updateWebRequests(data);
 			}
 		});
 	}
@@ -67,75 +51,84 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
 	urls: ['<all_urls>']
 }, ['responseHeaders', 'extraHeaders']);
 
-async function getArrayBuffers(data) {
+function elapsedTime() {
+	return ((Date.now() - startTime) / 1000).toFixed(2);
+}
+
+async function downloadFile(data, revokeURL, callback) {
+	if (revokeURL) {
+		callback(data.url);
+	}
+	const downloadId = await chrome.downloads.download({url: sanitizeURL(data.url)});
+	if (downloadId) {
+		console.log(`[${elapsedTime()}s] [R${data.requestId}] [D${downloadId}] ${data.url}`);
+	} else {
+		console.log(`[${elapsedTime()}s] [R${data.requestId}] Error: Failed to download ${data.url}`);
+	}
+}
+
+function filterArray(array) {
+	return array instanceof Array && array.length;
+}
+
+async function getArrays(data) {
 	try {
-		const urls = await getPlaylistURL(data);
-		if (!urls) {
-			throw `Cannot download ${data.url}`;
+		let urls = videoFragments[data.requestId];
+		if (!urls || !urls.length) {
+			urls = await getPlaylistURL(data);
+			if (!urls.length) {
+				throw `Error: Cannot download ${data.url}`;
+			}
+			videoFragments[data.requestId] = urls;
+		}
+		let arrays = fragmentArrays[data.requestId];
+		if (!arrays || !arrays.length || arrays.length !== urls.length) {
+			arrays = new Array(urls.length);
 		}
 		for (const [i, url] of urls.entries()) {
-			console.log(`[${data.tabId}] [${data.requestId} ${i + 1}/${urls.length}] ${url}`);
-			chrome.runtime.sendMessage({
+			updateDownloadStatus(data, {
+				msg: `[${i + 1}/${urls.length}] ${url}`,
+				perc: (i + 1) * 100 / urls.length
+			});
+			if (filterArray(arrays[i])) {
+				continue;
+			}
+			const array = await getArrayFromURL(url, data, `${i + 1}/${urls.length}`);
+			if (!filterArray(array)) {
+				fragmentArrays[data.requestId] = arrays;
+				throw `[${i + 1}/${urls.length}] Error: Cannot download ${data.url}`;
+			}
+			chrome.tabs.sendMessage(data.tabId, {
 				from: 'background',
-				to: 'popup',
-				subject: 'update_status',
+				to: 'content_script',
+				subject: 'arrays_to_blob',
 				data: {
-					tabId: data.tabId,
-					idx: data.idx,
-					msg: `[${i + 1}/${urls.length}] ${url}`,
-					function: 'highlight'
+					requestId: data.requestId,
+					array: array,
+					idx: i,
+					length: urls.length,
 				}
 			}, () => chrome.runtime.lastError);
-			try {
-				const res = await fetch(url);
-				const arrayBuffer = await res.arrayBuffer();
-				const array = new Uint32Array(arrayBuffer);
-				chrome.tabs.sendMessage(data.tabId, {
-					from: 'background',
-					to: 'content_script',
-					subject: 'array_buffers_to_blob',
-					data: {
-						tabId: data.tabId,
-						requestId: data.requestId,
-						idx: data.idx,
-						url: data.url,
-						array: array,
-						arrayLength: array.length,
-						arrayBuffersIdx: i,
-						arrayBuffersLength: urls.length,
-					}
-				});
-			} catch (err) {
-				console.log(`[${data.tabId}] [${data.requestId} ${i + 1}/${urls.length}] Error: ${err}`);
-				chrome.tabs.sendMessage(data.tabId, {
-					from: 'background',
-					to: 'content_script',
-					subject: 'error',
-					data: `[${i + 1}/${urls.length}] Error: ${err}`
-				});
-				return;
-			}
+			arrays[i] = array;
 		}
 		chrome.tabs.sendMessage(data.tabId, {
 			from: 'background',
 			to: 'content_script',
 			subject: 'blob_to_url',
-			data: {
-				tabId: data.tabId,
-				requestId: data.requestId,
-				idx: data.idx,
-				url: data.url
-			}
-		});
+			data: {requestId: data.requestId}
+		}, () => chrome.runtime.lastError);
+		fragmentArrays[data.requestId] = arrays;
 	} catch (err) {
-		console.log(`[${data.tabId}] [${data.requestId}] Error: ${err}`);
+		err = `[R${data.requestId}] ${err}`;
 		chrome.tabs.sendMessage(data.tabId, {
 			from: 'background',
 			to: 'content_script',
-			subject: 'error',
-			data: `Error: ${err}`
-		});
+			subject: 'alert',
+			data: err
+		}, () => chrome.runtime.lastError);
+		console.log(`[${elapsedTime()}s] ${err}`);
 	}
+	updateDownloadStatus(data);
 }
 
 async function getPlaylistURL(data) {
@@ -150,35 +143,102 @@ async function getPlaylistURL(data) {
 	urls = {};
 	const heights = Array.from(text.matchAll(/RESOLUTION=.*x(.*)\n(.*)\n/g), match => {
 		let height = match[1];
-		let idx = height.indexOf(',');
+		const idx = height.indexOf(',');
 		if (idx !== -1) {
 			height = height.substring(0, idx);
 		}
 		urls[height] = sanitizeURL(new URL(match[2], data.url).href);
 		return parseInt(height);
 	});
-	if (heights.length === 0) {
-		return false;
-	}
-	const maxHeight = Math.max(...heights).toString();
-	res = await fetch(urls[maxHeight]);
-	text = await res.text() + '\n';
-	urls = Array.from(text.matchAll(/,\n(.*)\n/g), match =>
-		sanitizeURL(new URL(match[1], urls[maxHeight]).href)
-	);
-	if (urls.length !== 0) {
+	if (heights.length) {
+		const maxHeight = Math.max(...heights).toString();
+		res = await fetch(urls[maxHeight]);
+		text = await res.text() + '\n';
+		urls = Array.from(text.matchAll(/,\n(.*)\n/g), match =>
+			sanitizeURL(new URL(match[1], urls[maxHeight]).href)
+		);
 		return urls;
 	}
-	return false;
+	return [];
+}
+
+async function getArrayFromURL(url, data, perc) {
+	console.log(`[${elapsedTime()}s] [R${data.requestId}] [${perc}] ${url}`);
+	try {
+		const res = await fetch(url);
+		const arrayBuffer = await res.arrayBuffer();
+		return Array.from(new Uint32Array(arrayBuffer));
+	} catch (err) {
+		err = `[R${data.requestId}] [${perc}] ${err}`;
+		chrome.tabs.sendMessage(data.tabId, {
+			from: 'background',
+			to: 'content_script',
+			subject: 'alert',
+			data: err
+		}, () => chrome.runtime.lastError);
+		console.log(`[${elapsedTime()}s] ${err}`);
+		return null;
+	}
+}
+
+async function updateDownloadStatus(data, downloadStatus=null) {
+	if (downloadStatus) {
+		data.downloadStatus = downloadStatus;
+	} else {
+		delete data.downloadStatus;
+	}
+	chrome.runtime.sendMessage({
+		from: 'background',
+		to: 'popup',
+		subject: 'update_status',
+		data: data
+	}, () => chrome.runtime.lastError);
+
+	let storage = await chrome.storage.local.get(data.tabId.toString());
+	const object = storage[data.tabId.toString()];
+	if (object instanceof Array && object.length) {
+		object[data.idx] = data;
+
+		storage = {};
+		storage[data.tabId.toString()] = object;
+		chrome.storage.local.set(storage);
+	}
+}
+
+function updateWebRequests(data) {
+	chrome.storage.local.get(data.tabId.toString(), storage => {
+		let object = storage[data.tabId.toString()];
+		if (!object) {
+			object = [];
+		}
+
+		data.idx = object.length;
+		if (requestHeaders[data.requestId]) {
+			data.requestHeaders = requestHeaders[data.requestId];
+		}
+		if (matchPlaylistURL(data)) {
+			data.isPlaylist = true;
+		}
+		object.push(data);
+
+		storage = {};
+		storage[data.tabId.toString()] = object;
+		chrome.storage.local.set(storage);
+	});
+}
+
+function getHeader(headers, headerName) {
+	for (let i = 0; i < headers.length; i++) {
+		if (headers[i].name.toLowerCase() === headerName) {
+			return headers[i];
+		}
+	}
 }
 
 function sanitizeURL(url) {
 	// Define your custom rules here
 	if (url.match(/googleusercontent\.com\/.*&url=.*/g)) {
-		matches = Array.from(url.matchAll(/googleusercontent\.com\/.*&url=(.*)/g));
-		if (matches[0].length === 2) {
-			return matches[0][1];
-		}
+		return Array.from(url.matchAll(/googleusercontent\.com\/.*&url=(.*)/g))[0][1];
 	}
 	return url;
 }
@@ -188,10 +248,12 @@ function matchURL(data) {
 	return true;
 }
 
-function getHeader(headers, headerName) {
-	for (let i = 0; i < headers.length; i++) {
-		if (headers[i].name.toLowerCase() === headerName) {
-			return headers[i];
-		}
-	}
+function matchPlaylistURL(data) {
+	// Define your custom rules here
+	return (
+		data.mimeType === 'application/vnd.apple.mpegurl'
+		|| data.url.includes('master.txt')
+		|| data.url.includes('.m3u8')
+		|| data.url.includes('/m3/')
+	);
 }

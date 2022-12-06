@@ -1,33 +1,30 @@
 # ![Icon](assets/icon_32.png) Network Tracker
 
-A Chrome extension to get all network requests in a website and download files and videos from the internet.
+A Chrome extension to get all network requests in a website and download files and videos from it.
 
 ![Screenshot](assets/screenshot.png)
 
-## Examples
+## Configuration
 
-In `sanitizeURL` function at [background.js](js/background.js#L175-L184):
+In `sanitizeURL` function at [background.js](js/background.js#L238-L244):
 
 ```js
 function sanitizeURL(url) {
 	...
 	if (url.match(/googleusercontent\.com\/.*&url=.*/g)) {
-		matches = Array.from(url.matchAll(/googleusercontent\.com\/.*&url=(.*)/g));
-		if (matches[0].length === 2) {
-			return matches[0][1];
-		}
+		return Array.from(url.matchAll(/googleusercontent\.com\/.*&url=(.*)/g))[0][1];
 	}
 	...
 	return url;
 }
 ```
 
-In `matchURL` function at [background.js](js/background.js#L186-L189):
+In `matchURL` function at [background.js](js/background.js#L246-L249):
 
 ```js
 function matchURL(data) {
 	...
-	if (data.tabURL.match(/https?:\/\/example\.com/g)) {
+	if (data.tabURL.match(/https?:\/\/www\.example\.com/g)) {
 		return (
 			(data.mimeType && (
 				data.mimeType === 'application/vnd.apple.mpegurl'
@@ -42,12 +39,12 @@ function matchURL(data) {
 }
 ```
 
-In `matchPlaylist` function at [popup.js](js/popup.js#L209-L217):
+In `matchPlaylistURL` function at [background.js](js/background.js#L251-L259):
 
 ```js
-function matchPlaylist(data) {
+function matchPlaylistURL(data) {
 	...
-	if (data.tabURL.match(/https?:\/\/example\.com/g)) {
+	if (data.tabURL.match(/https?:\/\/www\.example\.com/g)) {
 		return (
 			data.mimeType === 'application/vnd.apple.mpegurl'
 			|| data.url.includes('master.txt')
