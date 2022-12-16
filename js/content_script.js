@@ -47,7 +47,7 @@ function arraysToBlob(data) {
 	}
 }
 
-function blobToURL(data) {
+async function blobToURL(data) {
 	try {
 		if (arrayBuffers[data.requestId] instanceof Blob) {
 			const blobURL = URL.createObjectURL(arrayBuffers[data.requestId]);
