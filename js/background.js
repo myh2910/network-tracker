@@ -272,7 +272,21 @@ function sanitizeURL(url) {
 
 function matchURL(data) {
 	// Define your custom rules here
-	return true;
+	if (data.tabURL.match(/https?:\/\/www\.youtube\.com/g)) {
+		return false;
+	}
+	return (
+		(data.mimeType && (
+			data.mimeType === 'application/vnd.apple.mpegurl'
+			|| data.mimeType.match(/^(video|audio)/g)
+		))
+		|| data.url.match(/^(?!.*\bthumbnails\.vtt\b).*\.(m3u8|aaa|ts|vtt|srt)\b/g)
+		|| data.url.match(/\/br\/H[1-4]/g)
+		|| data.url.match(/\bmaster\.txt\b/g)
+		|| data.url.match(/\/subtitles?\//g)
+		|| data.url.includes('/m3/')
+		|| data.url.includes('googleusercontent.com/download/storage/')
+	);
 }
 
 function matchPlaylistURL(data) {
