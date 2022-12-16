@@ -14,7 +14,7 @@ chrome.runtime.onConnect.addListener(port => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message.to === 'background') {
 		if (message.subject === 'download_file') {
-			downloadFile(message.data, message.revokeURL, sendResponse);
+			downloadFile(message.data);
 		} else if (message.subject === 'get_arrays') {
 			getArrays(message.data);
 		}
@@ -60,13 +60,13 @@ chrome.webRequest.onHeadersReceived.addListener(data => {
 }, ['responseHeaders', 'extraHeaders']);
 
 async function findTab(tabs) {
-	if (chrome.runtime.lastError) { /* Tab was closed before setTimeout ran */ }
+	if (chrome.runtime.lastError) {}
 	for (const {id: tabId} of tabs || await chrome.tabs.query({url: '*://*/*'})) {
 		try {
 			await chrome.scripting.executeScript({target: {tabId}, func: connect});
 			chrome.tabs.onUpdated.removeListener(onUpdate);
 			return;
-		} catch (e) { /* Error */ }
+		} catch (e) {}
 	}
 	chrome.tabs.onUpdated.addListener(onUpdate);
 }
@@ -83,10 +83,7 @@ function elapsedTime() {
 	return ((Date.now() - startTime) / 1000).toFixed(2);
 }
 
-async function downloadFile(data, revokeURL, callback) {
-	if (revokeURL) {
-		callback(data.url);
-	}
+async function downloadFile(data) {
 	const downloadId = await chrome.downloads.download({url: sanitizeURL(data.url)});
 	if (downloadId) {
 		console.log(`[${elapsedTime()}s] [R${data.requestId}] [D${downloadId}] ${data.url}`);

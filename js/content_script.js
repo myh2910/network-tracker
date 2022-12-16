@@ -47,22 +47,17 @@ function arraysToBlob(data) {
 	}
 }
 
-async function blobToURL(data) {
+function blobToURL(data) {
 	try {
 		if (arrayBuffers[data.requestId] instanceof Blob) {
-			const blobURL = URL.createObjectURL(arrayBuffers[data.requestId]);
-			await new Promise(resolve => setTimeout(resolve, 500));
 			chrome.runtime.sendMessage({
 				from: 'content_script',
 				to: 'background',
 				subject: 'download_file',
 				data: {
 					requestId: data.requestId,
-					url: blobURL
-				},
-				revokeURL: true
-			}, url => {
-				URL.revokeObjectURL(url);
+					url: URL.createObjectURL(arrayBuffers[data.requestId])
+				}
 			});
 		}
 	} catch (err) {
