@@ -3,7 +3,7 @@
 	"author": "myh2910",
 	"name": "Network Tracker",
 	"description": "Get all network requests in a website",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"background": {
 		"service_worker": "js/background.js"
 	},
@@ -13,6 +13,7 @@
 		"js": ["js/content_script.js"]
 	}],
 	"permissions": [
+		"scripting",
 		"webNavigation",
 		"webRequest",
 		"tabs",
