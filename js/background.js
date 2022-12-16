@@ -1,7 +1,15 @@
 const requestHeaders = {};
 const videoFragments = {};
-const fragmentArrays = {};
 const startTime = Date.now();
+
+findTab();
+
+chrome.runtime.onConnect.addListener(port => {
+	if (port.name === 'keepAlive') {
+		setTimeout(() => port.disconnect(), 250e3);
+		port.onDisconnect.addListener(() => findTab());
+	}
+});
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message.to === 'background') {
@@ -51,6 +59,26 @@ chrome.webRequest.onHeadersReceived.addListener(data => {
 	urls: ['<all_urls>']
 }, ['responseHeaders', 'extraHeaders']);
 
+async function findTab(tabs) {
+	if (chrome.runtime.lastError) { /* Tab was closed before setTimeout ran */ }
+	for (const {id: tabId} of tabs || await chrome.tabs.query({url: '*://*/*'})) {
+		try {
+			await chrome.scripting.executeScript({target: {tabId}, func: connect});
+			chrome.tabs.onUpdated.removeListener(onUpdate);
+			return;
+		} catch (e) { /* Error */ }
+	}
+	chrome.tabs.onUpdated.addListener(onUpdate);
+}
+
+function connect() {
+	chrome.runtime.connect({name: 'keepAlive'}).onDisconnect.addListener(connect);
+}
+
+function onUpdate(tabId, info, tab) {
+	/^https?:/.test(info.url) && findTab([tab]);
+}
+
 function elapsedTime() {
 	return ((Date.now() - startTime) / 1000).toFixed(2);
 }
@@ -81,35 +109,38 @@ async function getArrays(data) {
 			}
 			videoFragments[data.requestId] = urls;
 		}
-		let arrays = fragmentArrays[data.requestId];
-		if (!arrays || !arrays.length || arrays.length !== urls.length) {
-			arrays = new Array(urls.length);
-		}
+		let promises = [];
 		for (const [i, url] of urls.entries()) {
-			updateDownloadStatus(data, {
-				msg: `[${i + 1}/${urls.length}] ${url}`,
-				perc: (i + 1) * 100 / urls.length
-			});
-			if (filterArray(arrays[i])) {
-				continue;
-			}
-			const array = await getArrayFromURL(url, data, `${i + 1}/${urls.length}`);
-			if (!filterArray(array)) {
-				fragmentArrays[data.requestId] = arrays;
-				throw `[${i + 1}/${urls.length}] Error: Cannot download ${data.url}`;
-			}
-			chrome.tabs.sendMessage(data.tabId, {
-				from: 'background',
-				to: 'content_script',
-				subject: 'arrays_to_blob',
-				data: {
-					requestId: data.requestId,
-					array: array,
-					idx: i,
-					length: urls.length,
+			async function promise() {
+				updateDownloadStatus(data, {
+					msg: `[${i + 1}/${urls.length}] ${url}`,
+					perc: (i + 1) * 100 / urls.length
+				});
+				const array = await getArrayFromURL(url, data, `${i + 1}/${urls.length}`);
+				if (!filterArray(array)) {
+					throw `[${i + 1}/${urls.length}] Error: Cannot download ${data.url}`;
 				}
-			}, () => chrome.runtime.lastError);
-			arrays[i] = array;
+				chrome.tabs.sendMessage(data.tabId, {
+					from: 'background',
+					to: 'content_script',
+					subject: 'arrays_to_blob',
+					data: {
+						requestId: data.requestId,
+						array: array,
+						idx: i,
+						length: urls.length,
+					}
+				}, () => chrome.runtime.lastError);
+			}
+			promises.push(promise());
+			if (promises.length === 10) {
+				await Promise.all(promises);
+				promises = [];
+			}
+		};
+		if (promises.length) {
+			await Promise.all(promises);
+			promises = [];
 		}
 		chrome.tabs.sendMessage(data.tabId, {
 			from: 'background',
@@ -117,7 +148,6 @@ async function getArrays(data) {
 			subject: 'blob_to_url',
 			data: {requestId: data.requestId}
 		}, () => chrome.runtime.lastError);
-		fragmentArrays[data.requestId] = arrays;
 	} catch (err) {
 		err = `[R${data.requestId}] ${err}`;
 		chrome.tabs.sendMessage(data.tabId, {
