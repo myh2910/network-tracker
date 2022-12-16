@@ -19,7 +19,7 @@ function sanitizeURL(url) {
 }
 ```
 
-In `matchURL` function at [background.js](js/background.js#L273-L276):
+In `matchURL` function at [background.js](js/background.js#L273-L290):
 
 ```js
 function matchURL(data) {
@@ -39,7 +39,7 @@ function matchURL(data) {
 }
 ```
 
-In `matchPlaylistURL` function at [background.js](js/background.js#L278-L286):
+In `matchPlaylistURL` function at [background.js](js/background.js#L292-L300):
 
 ```js
 function matchPlaylistURL(data) {
