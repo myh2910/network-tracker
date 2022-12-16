@@ -6,7 +6,7 @@ A Chrome extension to get all network requests in a website and download files a
 
 ## Configuration
 
-In `sanitizeURL` function at [background.js](js/background.js#L268-L274):
+In `sanitizeURL` function at [background.js](js/background.js#L265-L271):
 
 ```js
 function sanitizeURL(url) {
@@ -19,7 +19,7 @@ function sanitizeURL(url) {
 }
 ```
 
-In `matchURL` function at [background.js](js/background.js#L276-L279):
+In `matchURL` function at [background.js](js/background.js#L273-L276):
 
 ```js
 function matchURL(data) {
@@ -39,7 +39,7 @@ function matchURL(data) {
 }
 ```
 
-In `matchPlaylistURL` function at [background.js](js/background.js#L281-L289):
+In `matchPlaylistURL` function at [background.js](js/background.js#L278-L286):
 
 ```js
 function matchPlaylistURL(data) {
