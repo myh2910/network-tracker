@@ -1,41 +1,41 @@
 {
-	"manifest_version": 3,
-	"author": "myh2910",
-	"name": "Network Tracker",
-	"description": "Get all network requests in a website",
-	"version": "0.2.4",
-	"background": {
-		"service_worker": "js/background.js"
-	},
-	"content_scripts": [{
-		"matches": ["<all_urls>"],
-		"run_at": "document_start",
-		"js": ["js/content_script.js"]
-	}],
-	"permissions": [
-		"scripting",
-		"webNavigation",
-		"webRequest",
-		"tabs",
-		"activeTab",
-		"downloads",
-		"storage",
-		"unlimitedStorage"
-	],
-	"host_permissions": ["<all_urls>"],
-	"action": {
-		"default_popup": "popup.html",
-		"default_icon": {
-			"16": "assets/icon_16.png",
-			"32": "assets/icon_32.png",
-			"64": "assets/icon_64.png",
-			"128": "assets/icon_128.png"
-		}
-	},
-	"icons": {
-		"16": "assets/icon_16.png",
-		"32": "assets/icon_32.png",
-		"64": "assets/icon_64.png",
-		"128": "assets/icon_128.png"
-	}
+  "manifest_version": 3,
+  "author": "myh2910",
+  "name": "Network Tracker",
+  "description": "Get all network requests in a website",
+  "version": "0.2.4",
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "run_at": "document_start",
+    "js": ["js/content_script.js"]
+  }],
+  "permissions": [
+    "scripting",
+    "webNavigation",
+    "webRequest",
+    "tabs",
+    "activeTab",
+    "downloads",
+    "storage",
+    "unlimitedStorage"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/icon_16.png",
+      "32": "assets/icon_32.png",
+      "64": "assets/icon_64.png",
+      "128": "assets/icon_128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icon_16.png",
+    "32": "assets/icon_32.png",
+    "64": "assets/icon_64.png",
+    "128": "assets/icon_128.png"
+  }
 }

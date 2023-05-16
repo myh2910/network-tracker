@@ -1,165 +1,166 @@
 /* Font: https://fonts.google.com/specimen/Inconsolata */
-@import url("https://fonts.googleapis.com/css2?family=Inconsolata:wght@600");
-@import url("https://fonts.googleapis.com/css2?family=Inconsolata:wght@700");
+@import url(https://fonts.googleapis.com/css2?family=Inconsolata:wght@600);
+@import url(https://fonts.googleapis.com/css2?family=Inconsolata:wght@700);
 
 body {
-	font-size: 13px;
-	font-family: "Inconsolata", "Consolas", "Dejavu Sans Mono", "Courier New", monospace;
+  font-size: 13px;
+  font-family: "Inconsolata", "Consolas", "Dejavu Sans Mono", "Courier New",
+    monospace;
 }
 
 h1 {
-	font-size: 1.7em;
+  font-size: 1.7em;
 }
 
 h2 {
-	font-size: 1.2em;
+  font-size: 1.2em;
 }
 
 h1,
 h2 {
-	margin: 0 4px;
-	font-weight: 700;
-	white-space: nowrap;
+  margin: 0 4px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 table {
-	margin: 4px 0;
-	border-spacing: 0;
+  margin: 4px 0;
+  border-spacing: 0;
 }
 
 tbody > tr:first-child > td:last-child {
-	width: calc(100ch * 0.9 + 4px);
-	padding-left: 2.5px;
-	padding-right: 2.5px;
+  width: calc(100ch * 0.9 + 4px);
+  padding-left: 2.5px;
+  padding-right: 2.5px;
 }
 
 tbody > tr:last-child > td:last-child {
-	width: calc(100ch * 0.9 + 5px);
-	padding-left: 2px;
-	padding-right: 2px;
+  width: calc(100ch * 0.9 + 5px);
+  padding-left: 2px;
+  padding-right: 2px;
 }
 
 tbody > tr:first-child > td {
-	padding-top: 2px;
+  padding-top: 2px;
 }
 
 tbody > tr:last-child > td {
-	padding-bottom: 2px;
+  padding-bottom: 2px;
 }
 
 tbody:hover {
-	background-color: #ddd;
+  background-color: #ddd;
 }
 
 .copy {
-	background-color: slategray;
+  background-color: slategray;
 }
 
 .download {
-	background-color: #907070;
+  background-color: #907070;
 }
 
 .box {
-	border-radius: 3px;
-	padding: 1px 2.5px;
-	font-size: 0.9em;
+  border-radius: 3px;
+  padding: 1px 2.5px;
+  font-size: 0.9em;
 }
 
 .tooltip-wrap {
-	position: relative;
-	justify-content: center;
-	display: inline-flex;
-	padding: 0;
+  position: relative;
+  justify-content: center;
+  display: inline-flex;
+  padding: 0;
 }
 
 div.tooltip-wrap {
-	float: left;
+  float: left;
 }
 
-div.tooltip {
-	position: absolute;
-	bottom: 100%;
-	visibility: hidden;
-	opacity: 0;
-	transition: 180ms;
-	max-width: calc(100ch + 0.5px);
-	min-width: 12ch;
-	background-color: #343434;
-	pointer-events: none;
-	text-align: center;
-	color: #fff;
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  visibility: hidden;
+  opacity: 0;
+  transition: 180ms;
+  max-width: calc(100ch + 0.5px);
+  min-width: 12ch;
+  background-color: #343434;
+  pointer-events: none;
+  text-align: center;
+  color: #fff;
 }
 
-div.tooltip:after {
-	content: " ";
-	position: absolute;
-	top: 100%;
-	left: 50%;
-	margin-left: -2.5px;
-	border-width: 2.5px;
-	border-style: solid;
-	border-color: #343434 transparent transparent;
+.tooltip:after {
+  content: " ";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -2.5px;
+  border-width: 2.5px;
+  border-style: solid;
+  border-color: #343434 transparent transparent;
 }
 
-div:hover + div.tooltip {
-	bottom: calc(100% + 3px);
-	visibility: visible;
-	opacity: 1;
+div:hover + .tooltip {
+  bottom: calc(100% + 3px);
+  visibility: visible;
+  opacity: 1;
 }
 
-div.request-status {
-	position: relative;
-	color: #fff;
+.request-status {
+  position: relative;
+  color: #fff;
 }
 
-div.request-type {
-	float: left;
-	margin-left: 3px;
-	color: #444;
+.request-type {
+  float: left;
+  margin-left: 3px;
+  color: #444;
 }
 
-td.request-idx {
-	padding: 2px 3px;
-	font-weight: 700;
-	vertical-align: top;
-	text-align: right;
-	color: #1034a6;
+.request-idx {
+  padding: 2px 3px;
+  font-weight: 700;
+  vertical-align: top;
+  text-align: right;
+  color: #1034a6;
 }
 
-div.request-url {
-	overflow-x: auto;
-	border: 1px solid #ccc;
-	border-radius: 2px;
-	width: 100%;
-	padding: 1px 2px;
-	background-color: ghostwhite;
-	white-space: nowrap;
-	color: #444;
+.request-url {
+  overflow-x: auto;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  width: 100%;
+  padding: 1px 2px;
+  background-color: ghostwhite;
+  white-space: nowrap;
+  color: #444;
 }
 
-a.button {
-	float: right;
-	margin-left: 3px;
-	user-select: none;
-	text-decoration: none;
-	color: #fff;
+.button {
+  float: right;
+  margin-left: 3px;
+  user-select: none;
+  text-decoration: none;
+  color: #fff;
 }
 
-a.button:hover {
-	cursor: pointer;
-	filter: brightness(85%);
+.button:hover {
+  cursor: pointer;
+  filter: brightness(85%);
 }
 
-a.button:active {
-	filter: brightness(70%);
+.button:active {
+  filter: brightness(70%);
 }
 
-span.fit-content {
-	display: -webkit-box;
-	-webkit-line-clamp: 3;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-	width: 100%;
-	text-align: left;
-	word-break: break-all;
+.fit-content {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  width: 100%;
+  text-align: left;
+  word-break: break-all;
 }
