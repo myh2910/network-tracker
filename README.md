@@ -48,10 +48,10 @@ function matchPlaylistURL(data) {
   ...
   if (data.tabURL.match(/https?:\/\/www\.example\.com/g)) {
     return (
-      data.mimeType === "application/vnd.apple.mpegurl"
-      || data.url.includes("master.txt")
-      || data.url.includes(".m3u8")
-      || data.url.includes("/m3/")
+      data.mimeType === "application/vnd.apple.mpegurl" ||
+      data.url.includes("master.txt") ||
+      data.url.includes(".m3u8") ||
+      data.url.includes("/m3/")
     );
   }
   ...
